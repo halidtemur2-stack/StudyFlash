@@ -1,0 +1,713 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head><base href="https://d16ilfvy4mv02r.cloudfront.net/workspaces/o5i6gQb8Ver38EJtAoIbirkp3ibyw8RU/cb305a55-5a74-4f3f-93ae-ff8f4cd94481/files/">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudyFlash — Flashcards, Slideshows & Quizzes</title>
+<style>
+  :root{
+    --primary:#5b5bf5;--primary-dark:#4444d1;--bg:#f5f6fb;--card:#ffffff;
+    --text:#222;--muted:#777;--good:#2ecc71;--bad:#e74c3c;--warn:#f39c12;
+    --radius:14px;--shadow:0 4px 18px rgba(0,0,0,.08);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);}
+  header{background:linear-gradient(135deg,var(--primary),#8a5bf5);color:#fff;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+  header h1{margin:0;font-size:22px;}
+  header .tagline{font-size:12px;opacity:.85;margin-top:2px;}
+  nav{display:flex;gap:8px;flex-wrap:wrap;}
+  nav button{background:rgba(255,255,255,.18);border:none;color:#fff;padding:8px 14px;border-radius:20px;cursor:pointer;font-size:13px;font-weight:600;transition:.15s;}
+  nav button:hover{background:rgba(255,255,255,.32);}
+  nav button.active{background:#fff;color:var(--primary-dark);}
+  main{max-width:1000px;margin:0 auto;padding:24px 16px 60px;}
+  .view{display:none;}
+  .view.active{display:block;animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card-panel{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;margin-bottom:18px;}
+  h2{margin-top:0;}
+  .deck-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;}
+  .deck-tile{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;cursor:pointer;position:relative;transition:.15s;border:2px solid transparent;}
+  .deck-tile:hover{transform:translateY(-3px);border-color:var(--primary);}
+  .deck-tile h3{margin:0 0 6px;font-size:17px;}
+  .deck-tile p{margin:0;font-size:13px;color:var(--muted);}
+  .deck-tile .count{display:inline-block;margin-top:8px;background:#eef0ff;color:var(--primary-dark);font-size:12px;padding:3px 10px;border-radius:12px;}
+  .deck-tile .del{position:absolute;top:8px;right:10px;background:none;border:none;color:var(--bad);cursor:pointer;font-size:16px;}
+  button.primary{background:var(--primary);color:#fff;border:none;padding:10px 18px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;}
+  button.primary:hover{background:var(--primary-dark);}
+  button.secondary{background:#eef0ff;color:var(--primary-dark);border:none;padding:10px 18px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;}
+  button.secondary:hover{background:#dde0ff;}
+  button.ghost{background:none;border:1px solid #ddd;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;}
+  input,textarea,select{width:100%;padding:9px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit;margin-bottom:10px;}
+  label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.03em;}
+  .row{display:flex;gap:10px;flex-wrap:wrap;}
+  .row > *{flex:1;min-width:150px;}
+  table{width:100%;border-collapse:collapse;margin-top:10px;}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid #eee;font-size:13px;}
+  th{color:var(--muted);font-size:12px;text-transform:uppercase;}
+  .flash-actions{display:flex;gap:8px;margin-top:6px;}
+  .flash-actions button{padding:6px 10px;font-size:12px;}
+
+  /* Slideshow / Study */
+  .stage{display:flex;flex-direction:column;align-items:center;gap:18px;}
+  .flashcard{width:100%;max-width:560px;min-height:260px;background:linear-gradient(135deg,#fff,#f0f1ff);border-radius:18px;box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;text-align:center;padding:30px;cursor:pointer;font-size:20px;font-weight:600;position:relative;perspective:1000px;user-select:none;}
+  .flashcard .face-label{position:absolute;top:12px;left:16px;font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;}
+  .progress-bar{width:100%;max-width:560px;height:6px;background:#e5e6f5;border-radius:4px;overflow:hidden;}
+  .progress-bar .fill{height:100%;background:var(--primary);transition:width .2s;}
+  .controls{display:flex;gap:12px;align-items:center;}
+  .controls button{width:44px;height:44px;border-radius:50%;border:none;background:var(--primary);color:#fff;font-size:18px;cursor:pointer;}
+  .controls button:disabled{background:#ccc;cursor:not-allowed;}
+  .counter{font-size:13px;color:var(--muted);}
+
+  /* Quiz */
+  .quiz-option{display:block;width:100%;text-align:left;background:#f8f8ff;border:2px solid #e5e6f5;padding:12px 16px;border-radius:10px;margin-bottom:10px;cursor:pointer;font-size:15px;transition:.15s;}
+  .quiz-option:hover{border-color:var(--primary);}
+  .quiz-option.correct{background:#eafff0;border-color:var(--good);}
+  .quiz-option.wrong{background:#ffecec;border-color:var(--bad);}
+  .quiz-score{font-size:15px;font-weight:700;}
+
+  /* Modal / Ad overlay */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:999;}
+  .overlay.active{display:flex;}
+  .modal{background:#fff;border-radius:16px;padding:26px;max-width:420px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,.3);}
+  .ad-box{background:linear-gradient(135deg,#ffd35b,#ff9d5b);border-radius:14px;padding:26px;text-align:center;color:#5a3a00;font-weight:700;}
+  .ad-timer{font-size:42px;margin:14px 0;}
+  .ad-note{font-size:12px;color:var(--muted);margin-top:10px;}
+  .badge{display:inline-block;background:#fff3cd;color:#856404;font-size:11px;padding:3px 8px;border-radius:8px;font-weight:700;margin-left:6px;}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;z-index:1000;display:none;}
+  .empty{text-align:center;color:var(--muted);padding:40px 10px;}
+  .share-box textarea{height:100px;font-family:monospace;font-size:11px;}
+  .simplified-tag{display:inline-block;background:#e6f7ee;color:#1a8a4c;font-size:11px;padding:2px 8px;border-radius:8px;font-weight:700;margin-left:6px;}
+  footer{text-align:center;color:var(--muted);font-size:12px;padding:20px;}
+</style>
+<script src="https://pl30359408.effectivecpmnetwork.com/48/ab/b9/48abb927ce0a4fbe594de40c9e166ce1.js"></script>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>📚 StudyFlash</h1>
+    <div class="tagline">Flashcards • Slideshows • Quizzes — built for students</div>
+  </div>
+  <nav id="nav">
+    <button data-view="decks" class="active">My Decks</button>
+    <button data-view="editor">Add / Edit</button>
+    <button data-view="slideshow">Slideshow</button>
+    <button data-view="quiz">Quiz</button>
+    <button data-view="share">Share / Import</button>
+  </nav>
+</header>
+
+<main>
+
+  <!-- DECKS VIEW -->
+  <section id="view-decks" class="view active">
+    <div class="card-panel">
+      <h2>My Flashcard Decks</h2>
+      <p style="color:var(--muted);font-size:14px;">Pick a deck to study, quiz yourself, or turn it into a simplified slideshow.</p>
+      <div id="deckGrid" class="deck-grid"></div>
+    </div>
+  </section>
+
+  <!-- EDITOR VIEW -->
+  <section id="view-editor" class="view">
+    <div class="card-panel">
+      <h2>Create / Edit a Deck</h2>
+      <label>Deck name</label>
+      <input id="deckName" placeholder="e.g. Biology Chapter 4 — Cell Structure">
+      <label>Subject / tag (optional)</label>
+      <input id="deckTag" placeholder="e.g. Biology">
+      <div class="row">
+        <button class="primary" id="newDeckBtn">➕ Create New Deck</button>
+      </div>
+    </div>
+
+    <div class="card-panel" id="cardEditorPanel" style="display:none;">
+      <h2 id="editingDeckTitle">Editing: —</h2>
+      <div class="row">
+        <div>
+          <label>Front (Term / Question)</label>
+          <textarea id="cardFront" rows="2" placeholder="e.g. Mitochondria"></textarea>
+        </div>
+        <div>
+          <label>Back (Definition / Answer)</label>
+          <textarea id="cardBack" rows="2" placeholder="e.g. The organelle responsible for producing ATP through cellular respiration, often called the powerhouse of the cell."></textarea>
+        </div>
+      </div>
+      <button class="primary" id="addCardBtn">Add Flashcard</button>
+      <button class="ghost" id="doneEditingBtn" style="margin-left:8px;">Done Editing</button>
+
+      <table>
+        <thead><tr><th>#</th><th>Front</th><th>Back</th><th></th></tr></thead>
+        <tbody id="cardTableBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- SLIDESHOW VIEW -->
+  <section id="view-slideshow" class="view">
+    <div class="card-panel">
+      <h2>Slideshow / Study Mode</h2>
+      <div class="row">
+        <div>
+          <label>Choose a deck</label>
+          <select id="slideshowDeckSelect"></select>
+        </div>
+        <div style="max-width:220px;">
+          <label>Mode</label>
+          <select id="slideshowMode">
+            <option value="normal">Normal (original wording)</option>
+            <option value="simplified">Easier Words (AI-simplified) 🔒 watch ad</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="card-panel stage" id="slideshowStage" style="display:none;">
+      <div class="progress-bar"><div class="fill" id="progressFill"></div></div>
+      <div class="flashcard" id="flashcardEl">
+        <span class="face-label" id="faceLabel">FRONT — click to flip</span>
+        <span id="flashcardText">—</span>
+      </div>
+      <div class="controls">
+        <button id="prevBtn">‹</button>
+        <div class="counter" id="counterText">1 / 1</div>
+        <button id="nextBtn">›</button>
+      </div>
+    </div>
+    <div class="empty" id="slideshowEmpty">Select a deck above to start studying.</div>
+  </section>
+
+  <!-- QUIZ VIEW -->
+  <section id="view-quiz" class="view">
+    <div class="card-panel">
+      <h2>Quiz Yourself</h2>
+      <div class="row">
+        <div>
+          <label>Choose a deck</label>
+          <select id="quizDeckSelect"></select>
+        </div>
+        <div style="max-width:160px;">
+          <button class="primary" id="startQuizBtn" style="margin-top:22px;">Start Quiz</button>
+        </div>
+      </div>
+    </div>
+    <div class="card-panel" id="quizStage" style="display:none;">
+      <div class="quiz-score" id="quizScore">Score: 0 / 0</div>
+      <h3 id="quizQuestion" style="margin-top:14px;">Question</h3>
+      <div id="quizOptions"></div>
+      <button class="secondary" id="nextQuestionBtn" style="display:none;">Next Question →</button>
+      <div id="quizFinished" style="display:none;text-align:center;">
+        <h3>🎉 Quiz complete!</h3>
+        <p id="finalScoreText"></p>
+        <button class="primary" id="restartQuizBtn">Try Again</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- SHARE VIEW -->
+  <section id="view-share" class="view">
+    <div class="card-panel">
+      <h2>Share a Deck</h2>
+      <p style="color:var(--muted);font-size:14px;">Export a deck as a share code, then send it to a friend. They can paste it below to import it instantly — no accounts needed.</p>
+      <div class="row">
+        <div>
+          <label>Deck to export</label>
+          <select id="exportDeckSelect"></select>
+        </div>
+        <div style="max-width:160px;">
+          <button class="primary" id="exportBtn" style="margin-top:22px;">Generate Code</button>
+        </div>
+      </div>
+      <div class="share-box">
+        <label>Share code (copy this and send it)</label>
+        <textarea id="exportOutput" readonly></textarea>
+        <button class="ghost" id="copyExportBtn">📋 Copy to clipboard</button>
+        <button class="ghost" id="downloadExportBtn">⬇️ Download .json file</button>
+      </div>
+    </div>
+    <div class="card-panel">
+      <h2>Import a Shared Deck</h2>
+      <label>Paste share code here</label>
+      <textarea id="importInput" placeholder="Paste the share code you received..."></textarea>
+      <button class="primary" id="importBtn">Import Deck</button>
+    </div>
+  </section>
+
+</main>
+
+<footer>StudyFlash — all your data is saved locally in this browser (localStorage). Nothing is uploaded anywhere.</footer>
+
+<!-- Ad overlay for unlocking simplified mode -->
+<div class="overlay" id="adOverlay">
+  <div class="modal">
+    <div class="ad-box">
+      <div style="font-size:13px;">▶️ SPONSORED AD</div>
+      <div class="ad-timer" id="adTimer">30</div>
+      <div id="adSlogan">Thanks for supporting free study tools!</div>
+    </div>
+    <div class="ad-note">Watch this 30-second ad to unlock "Easier Words" simplified slideshows for this deck.</div>
+    <button class="primary" id="adCloseBtn" style="width:100%;margin-top:14px;display:none;">✅ Unlock Simplified Mode</button>
+    <button class="ghost" id="adCancelBtn" style="width:100%;margin-top:8px;">Cancel</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============ STORAGE ============ */
+const STORE_KEY = 'studyflash_decks_v1';
+const UNLOCK_KEY = 'studyflash_unlocked_v1';
+
+function loadDecks(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY)) || []; }catch(e){ return []; } }
+function saveDecks(decks){ localStorage.setItem(STORE_KEY, JSON.stringify(decks)); }
+function loadUnlocked(){ try{ return JSON.parse(localStorage.getItem(UNLOCK_KEY)) || []; }catch(e){ return []; } }
+function saveUnlocked(list){ localStorage.setItem(UNLOCK_KEY, JSON.stringify(list)); }
+
+let decks = loadDecks();
+let unlockedDecks = loadUnlocked();
+let currentEditingDeckId = null;
+
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+/* Seed a sample deck on first run */
+if(decks.length === 0){
+  decks.push({
+    id: uid(),
+    name: 'Sample: Cell Biology Basics',
+    tag: 'Biology',
+    cards: [
+      {front:'Mitochondria', back:'The organelle responsible for producing ATP through cellular respiration, often referred to as the powerhouse of the cell because it generates most of the chemical energy needed to power the biochemical reactions of the cell.'},
+      {front:'Nucleus', back:'The membrane-bound organelle that contains the cell\'s genetic material (DNA) and controls gene expression and cellular reproduction.'},
+      {front:'Photosynthesis', back:'The biochemical process by which chlorophyll-containing organisms convert light energy, water, and carbon dioxide into glucose and oxygen.'},
+      {front:'Osmosis', back:'The passive movement of water molecules across a semi-permeable membrane from an area of lower solute concentration to an area of higher solute concentration.'}
+    ]
+  });
+  saveDecks(decks);
+}
+
+/* ============ NAV ============ */
+document.getElementById('nav').addEventListener('click', e=>{
+  if(e.target.tagName !== 'BUTTON') return;
+  const view = e.target.dataset.view;
+  showView(view);
+});
+function showView(view){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+view).classList.add('active');
+  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active', b.dataset.view===view));
+  if(view==='decks') renderDecks();
+  if(view==='slideshow') populateDeckSelects();
+  if(view==='quiz') populateDeckSelects();
+  if(view==='share') populateDeckSelects();
+}
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=> t.style.display='none', 2200);
+}
+
+/* ============ DECKS VIEW ============ */
+function renderDecks(){
+  const grid = document.getElementById('deckGrid');
+  grid.innerHTML = '';
+  if(decks.length === 0){
+    grid.innerHTML = '<div class="empty">No decks yet. Go to "Add / Edit" to create your first deck!</div>';
+    return;
+  }
+  decks.forEach(d=>{
+    const tile = document.createElement('div');
+    tile.className = 'deck-tile';
+    tile.innerHTML = `
+      <button class="del" title="Delete deck">✕</button>
+      <h3>${escapeHtml(d.name)}</h3>
+      <p>${escapeHtml(d.tag||'General')}</p>
+      <span class="count">${d.cards.length} cards</span>
+    `;
+    tile.querySelector('.del').addEventListener('click', ev=>{
+      ev.stopPropagation();
+      if(confirm(`Delete deck "${d.name}"? This cannot be undone.`)){
+        decks = decks.filter(x=>x.id!==d.id);
+        saveDecks(decks);
+        renderDecks();
+      }
+    });
+    tile.addEventListener('click', ()=>{
+      currentEditingDeckId = d.id;
+      showView('editor');
+      openDeckEditor(d.id);
+    });
+    grid.appendChild(tile);
+  });
+}
+
+/* ============ EDITOR VIEW ============ */
+document.getElementById('newDeckBtn').addEventListener('click', ()=>{
+  const name = document.getElementById('deckName').value.trim();
+  if(!name){ toast('Please enter a deck name'); return; }
+  const tag = document.getElementById('deckTag').value.trim();
+  const deck = {id: uid(), name, tag, cards: []};
+  decks.push(deck);
+  saveDecks(decks);
+  document.getElementById('deckName').value = '';
+  document.getElementById('deckTag').value = '';
+  currentEditingDeckId = deck.id;
+  openDeckEditor(deck.id);
+  toast('Deck created! Now add some flashcards.');
+});
+
+function openDeckEditor(deckId){
+  const deck = decks.find(d=>d.id===deckId);
+  if(!deck) return;
+  currentEditingDeckId = deckId;
+  document.getElementById('cardEditorPanel').style.display = 'block';
+  document.getElementById('editingDeckTitle').textContent = 'Editing: ' + deck.name;
+  renderCardTable(deck);
+}
+
+function renderCardTable(deck){
+  const body = document.getElementById('cardTableBody');
+  body.innerHTML = '';
+  deck.cards.forEach((c,i)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${i+1}</td><td>${escapeHtml(c.front)}</td><td>${escapeHtml(truncate(c.back,60))}</td><td><button class="ghost" data-i="${i}">Delete</button></td>`;
+    tr.querySelector('button').addEventListener('click', ()=>{
+      deck.cards.splice(i,1);
+      saveDecks(decks);
+      renderCardTable(deck);
+    });
+    body.appendChild(tr);
+  });
+}
+
+document.getElementById('addCardBtn').addEventListener('click', ()=>{
+  const deck = decks.find(d=>d.id===currentEditingDeckId);
+  if(!deck){ toast('Create or select a deck first'); return; }
+  const front = document.getElementById('cardFront').value.trim();
+  const back = document.getElementById('cardBack').value.trim();
+  if(!front || !back){ toast('Fill in both sides of the card'); return; }
+  deck.cards.push({front, back});
+  saveDecks(decks);
+  document.getElementById('cardFront').value = '';
+  document.getElementById('cardBack').value = '';
+  renderCardTable(deck);
+});
+
+document.getElementById('doneEditingBtn').addEventListener('click', ()=>{
+  document.getElementById('cardEditorPanel').style.display = 'none';
+  showView('decks');
+});
+
+/* ============ SIMPLIFIER (rule-based, offline) ============ */
+const SYNONYMS = [
+  [/\butiliz(e|es|ed|ing)\b/gi, 'use$1'],
+  [/\bapproximately\b/gi, 'about'],
+  [/\bfacilitate[sd]?\b/gi, 'help'],
+  [/\bdemonstrate[sd]?\b/gi, 'show'],
+  [/\bsignificant(ly)?\b/gi, 'big$1'],
+  [/\bnumerous\b/gi, 'many'],
+  [/\bsubsequently\b/gi, 'later'],
+  [/\bprior to\b/gi, 'before'],
+  [/\bsufficient\b/gi, 'enough'],
+  [/\bcommence[sd]?\b/gi, 'start'],
+  [/\bterminate[sd]?\b/gi, 'end'],
+  [/\bcomponent[s]?\b/gi, 'part$&'.replace(/component[s]?/,'')+'part', ], // fallback not used
+  [/\bexamine[sd]?\b/gi, 'look at'],
+  [/\bindicate[sd]?\b/gi, 'show'],
+  [/\bacquire[sd]?\b/gi, 'get'],
+  [/\bassist(s|ed|ing)?\b/gi, 'help$1'],
+  [/\bregarding\b/gi, 'about'],
+  [/\btherefore\b/gi, 'so'],
+  [/\bhowever\b/gi, 'but'],
+  [/\bin order to\b/gi, 'to'],
+  [/\butilization\b/gi, 'use'],
+  [/\bcomplex\b/gi, 'hard'],
+  [/\bfundamental\b/gi, 'basic'],
+  [/\boccur[s]?\b/gi, 'happen$&'.replace('occurs','s').replace('occur','')],
+  [/\bresponsible for\b/gi, 'in charge of'],
+  [/\bcharacteristic[s]?\b/gi, 'trait$&'.replace(/characteristics?/,'')],
+  [/\bmechanism[s]?\b/gi, 'process$&'.replace(/mechanisms?/,'')],
+];
+
+function simplifyText(text){
+  if(!text) return text;
+  let out = text;
+  // basic synonym swaps
+  out = out.replace(/\butilize[sd]?\b/gi, m=>({'utilize':'use','utilizes':'uses','utilized':'used'}[m.toLowerCase()]||'use'));
+  out = out.replace(/\bapproximately\b/gi,'about');
+  out = out.replace(/\bfacilitate[sd]?\b/gi,'help');
+  out = out.replace(/\bdemonstrate[sd]?\b/gi,'show');
+  out = out.replace(/\bsignificantly\b/gi,'a lot');
+  out = out.replace(/\bsignificant\b/gi,'big');
+  out = out.replace(/\bnumerous\b/gi,'many');
+  out = out.replace(/\bsubsequently\b/gi,'later');
+  out = out.replace(/\bprior to\b/gi,'before');
+  out = out.replace(/\bsufficient\b/gi,'enough');
+  out = out.replace(/\bcommence[sd]?\b/gi,'start');
+  out = out.replace(/\bterminate[sd]?\b/gi,'end');
+  out = out.replace(/\bexamine[sd]?\b/gi,'look at');
+  out = out.replace(/\bindicate[sd]?\b/gi,'show');
+  out = out.replace(/\bacquire[sd]?\b/gi,'get');
+  out = out.replace(/\bregarding\b/gi,'about');
+  out = out.replace(/\btherefore\b/gi,'so');
+  out = out.replace(/\bhowever\b/gi,'but');
+  out = out.replace(/\bin order to\b/gi,'to');
+  out = out.replace(/\butilization\b/gi,'use');
+  out = out.replace(/\bcomplex\b/gi,'hard');
+  out = out.replace(/\bfundamental\b/gi,'basic');
+  out = out.replace(/\bresponsible for\b/gi,'in charge of');
+  out = out.replace(/\bmechanism(s)?\b/gi,(m,s)=>'process'+(s?'es':''));
+  out = out.replace(/\bcharacteristic(s)?\b/gi,(m,s)=>'trait'+(s?'s':''));
+  out = out.replace(/\bcomponent(s)?\b/gi,(m,s)=>'part'+(s?'s':''));
+
+  // split long sentences at semicolons/commas-with-conjunctions into shorter ones
+  out = out.replace(/;\s*/g, '. ');
+  out = out.replace(/,\s*(which|often|that is)\b/gi, '. This ');
+
+  // break very long sentences (>25 words) roughly in half at a comma
+  out = out.split(/(?<=[.!?])\s+/).map(sentence=>{
+    const words = sentence.trim().split(/\s+/);
+    if(words.length > 25){
+      const commaIdx = sentence.indexOf(',', Math.floor(sentence.length/3));
+      if(commaIdx > -1){
+        return sentence.slice(0,commaIdx+1) + '\n' + capitalize(sentence.slice(commaIdx+1).trim());
+      }
+    }
+    return sentence;
+  }).join(' ');
+
+  return out;
+}
+function capitalize(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+
+/* ============ SLIDESHOW VIEW ============ */
+let slideDeck = null, slideIndex = 0, slideFlipped = false, slideMode = 'normal';
+
+function populateDeckSelects(){
+  const sel1 = document.getElementById('slideshowDeckSelect');
+  const sel2 = document.getElementById('quizDeckSelect');
+  const sel3 = document.getElementById('exportDeckSelect');
+  [sel1, sel2, sel3].forEach(sel=>{
+    const prev = sel.value;
+    sel.innerHTML = '<option value="">-- select a deck --</option>' + decks.map(d=>`<option value="${d.id}">${escapeHtml(d.name)} (${d.cards.length})</option>`).join('');
+    if(prev) sel.value = prev;
+  });
+}
+
+document.getElementById('slideshowDeckSelect').addEventListener('change', e=>{
+  const deck = decks.find(d=>d.id===e.target.value);
+  if(!deck || deck.cards.length===0){
+    document.getElementById('slideshowStage').style.display='none';
+    document.getElementById('slideshowEmpty').style.display='block';
+    document.getElementById('slideshowEmpty').textContent = deck ? 'This deck has no cards yet.' : 'Select a deck above to start studying.';
+    return;
+  }
+  slideDeck = deck; slideIndex = 0; slideFlipped = false;
+  document.getElementById('slideshowStage').style.display='flex';
+  document.getElementById('slideshowEmpty').style.display='none';
+  renderSlide();
+});
+
+document.getElementById('slideshowMode').addEventListener('change', e=>{
+  const mode = e.target.value;
+  if(mode === 'simplified'){
+    if(!slideDeck){ toast('Select a deck first'); e.target.value='normal'; return; }
+    if(unlockedDecks.includes(slideDeck.id)){
+      slideMode = 'simplified'; slideFlipped=false; renderSlide();
+    } else {
+      e.target.value = 'normal';
+      openAdOverlay(slideDeck.id, ()=>{
+        e.target.value = 'simplified';
+        slideMode = 'simplified'; slideFlipped=false; renderSlide();
+      });
+    }
+  } else {
+    slideMode = 'normal'; slideFlipped=false; renderSlide();
+  }
+});
+
+function renderSlide(){
+  if(!slideDeck) return;
+  const card = slideDeck.cards[slideIndex];
+  const label = document.getElementById('faceLabel');
+  const textEl = document.getElementById('flashcardText');
+  let text = slideFlipped ? card.back : card.front;
+  let tag = '';
+  if(slideFlipped && slideMode==='simplified'){
+    text = simplifyText(card.back);
+    tag = ' <span class="simplified-tag">✨ Easier words</span>';
+  }
+  label.textContent = (slideFlipped ? 'BACK' : 'FRONT') + ' — click to flip';
+  textEl.innerHTML = escapeHtml(text).replace(/\n/g,'<br>') + tag;
+  document.getElementById('counterText').textContent = `${slideIndex+1} / ${slideDeck.cards.length}`;
+  document.getElementById('progressFill').style.width = `${((slideIndex+1)/slideDeck.cards.length)*100}%`;
+  document.getElementById('prevBtn').disabled = slideIndex===0;
+  document.getElementById('nextBtn').disabled = slideIndex===slideDeck.cards.length-1;
+}
+document.getElementById('flashcardEl').addEventListener('click', ()=>{ slideFlipped = !slideFlipped; renderSlide(); });
+document.getElementById('prevBtn').addEventListener('click', ()=>{ if(slideIndex>0){ slideIndex--; slideFlipped=false; renderSlide(); } });
+document.getElementById('nextBtn').addEventListener('click', ()=>{ if(slideDeck && slideIndex<slideDeck.cards.length-1){ slideIndex++; slideFlipped=false; renderSlide(); } });
+
+/* ============ AD OVERLAY ============ */
+let adTimerInterval = null;
+function openAdOverlay(deckId, onUnlock){
+  const overlay = document.getElementById('adOverlay');
+  const timerEl = document.getElementById('adTimer');
+  const closeBtn = document.getElementById('adCloseBtn');
+  const cancelBtn = document.getElementById('adCancelBtn');
+  document.getElementById('adSlogan').textContent = 'Thanks for supporting StudyFlash — ads keep this site free!';
+  let remaining = 30;
+  timerEl.textContent = remaining;
+  closeBtn.style.display = 'none';
+  overlay.classList.add('active');
+
+  clearInterval(adTimerInterval);
+  adTimerInterval = setInterval(()=>{
+    remaining--;
+    timerEl.textContent = remaining;
+    if(remaining <= 0){
+      clearInterval(adTimerInterval);
+      timerEl.textContent = '✔';
+      closeBtn.style.display = 'block';
+    }
+  }, 1000);
+
+  closeBtn.onclick = ()=>{
+    overlay.classList.remove('active');
+    if(!unlockedDecks.includes(deckId)){
+      unlockedDecks.push(deckId);
+      saveUnlocked(unlockedDecks);
+    }
+    toast('Unlocked! Enjoy the simplified slideshow.');
+    onUnlock && onUnlock();
+  };
+  cancelBtn.onclick = ()=>{
+    clearInterval(adTimerInterval);
+    overlay.classList.remove('active');
+  };
+}
+
+/* ============ QUIZ VIEW ============ */
+let quizDeck=null, quizQuestions=[], quizIdx=0, quizScore=0, quizAnswered=false;
+
+document.getElementById('startQuizBtn').addEventListener('click', ()=>{
+  const deckId = document.getElementById('quizDeckSelect').value;
+  quizDeck = decks.find(d=>d.id===deckId);
+  if(!quizDeck || quizDeck.cards.length < 2){ toast('Pick a deck with at least 2 cards'); return; }
+  buildQuiz();
+});
+
+function buildQuiz(){
+  quizQuestions = shuffle([...quizDeck.cards]).map(card=>{
+    const wrongPool = quizDeck.cards.filter(c=>c!==card);
+    const wrongs = shuffle(wrongPool).slice(0,3).map(c=>c.back);
+    const options = shuffle([card.back, ...wrongs]);
+    return {question: card.front, answer: card.back, options};
+  });
+  quizIdx = 0; quizScore = 0;
+  document.getElementById('quizStage').style.display='block';
+  document.getElementById('quizFinished').style.display='none';
+  document.getElementById('nextQuestionBtn').style.display='none';
+  renderQuizQuestion();
+}
+function renderQuizQuestion(){
+  quizAnswered = false;
+  const q = quizQuestions[quizIdx];
+  document.getElementById('quizScore').textContent = `Score: ${quizScore} / ${quizIdx}   (Question ${quizIdx+1} of ${quizQuestions.length})`;
+  document.getElementById('quizQuestion').textContent = q.question;
+  const optDiv = document.getElementById('quizOptions');
+  optDiv.innerHTML = '';
+  q.options.forEach(opt=>{
+    const btn = document.createElement('button');
+    btn.className = 'quiz-option';
+    btn.textContent = truncate(opt, 200);
+    btn.addEventListener('click', ()=>{
+      if(quizAnswered) return;
+      quizAnswered = true;
+      const correct = opt === q.answer;
+      if(correct){ quizScore++; btn.classList.add('correct'); }
+      else {
+        btn.classList.add('wrong');
+        [...optDiv.children].forEach(c=>{ if(c.textContent.trim()===truncate(q.answer,200).trim()) c.classList.add('correct'); });
+      }
+      document.getElementById('nextQuestionBtn').style.display = 'inline-block';
+    });
+    optDiv.appendChild(btn);
+  });
+  document.getElementById('nextQuestionBtn').style.display='none';
+}
+document.getElementById('nextQuestionBtn').addEventListener('click', ()=>{
+  quizIdx++;
+  if(quizIdx >= quizQuestions.length){
+    document.getElementById('quizQuestion').textContent = '';
+    document.getElementById('quizOptions').innerHTML = '';
+    document.getElementById('nextQuestionBtn').style.display='none';
+    document.getElementById('quizFinished').style.display='block';
+    document.getElementById('finalScoreText').textContent = `You scored ${quizScore} out of ${quizQuestions.length}! ${quizScore===quizQuestions.length?'Perfect! 🎉':'Keep practicing!'}`;
+    document.getElementById('quizScore').textContent = `Final Score: ${quizScore} / ${quizQuestions.length}`;
+  } else {
+    renderQuizQuestion();
+  }
+});
+document.getElementById('restartQuizBtn').addEventListener('click', buildQuiz);
+
+/* ============ SHARE / IMPORT ============ */
+document.getElementById('exportBtn').addEventListener('click', ()=>{
+  const id = document.getElementById('exportDeckSelect').value;
+  const deck = decks.find(d=>d.id===id);
+  if(!deck){ toast('Select a deck to export'); return; }
+  const payload = {studyflash:true, deck:{name:deck.name, tag:deck.tag, cards:deck.cards}};
+  const code = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+  document.getElementById('exportOutput').value = code;
+  toast('Share code generated!');
+});
+document.getElementById('copyExportBtn').addEventListener('click', ()=>{
+  const out = document.getElementById('exportOutput');
+  if(!out.value){ toast('Generate a code first'); return; }
+  out.select();
+  document.execCommand('copy');
+  toast('Copied to clipboard!');
+});
+document.getElementById('downloadExportBtn').addEventListener('click', ()=>{
+  const out = document.getElementById('exportOutput').value;
+  if(!out){ toast('Generate a code first'); return; }
+  const id = document.getElementById('exportDeckSelect').value;
+  const deck = decks.find(d=>d.id===id);
+  const blob = new Blob([JSON.stringify({studyflash:true, deck:{name:deck.name, tag:deck.tag, cards:deck.cards}}, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (deck.name.replace(/\s+/g,'_')||'deck') + '.json';
+  a.click();
+});
+document.getElementById('importBtn').addEventListener('click', ()=>{
+  const raw = document.getElementById('importInput').value.trim();
+  if(!raw){ toast('Paste a share code first'); return; }
+  try{
+    let payload;
+    try{ payload = JSON.parse(decodeURIComponent(escape(atob(raw)))); }
+    catch(e){ payload = JSON.parse(raw); }
+    if(!payload.deck || !Array.isArray(payload.deck.cards)) throw new Error('bad format');
+    const newDeck = {id: uid(), name: payload.deck.name + ' (imported)', tag: payload.deck.tag||'', cards: payload.deck.cards};
+    decks.push(newDeck);
+    saveDecks(decks);
+    document.getElementById('importInput').value = '';
+    toast('Deck imported successfully!');
+    populateDeckSelects();
+  }catch(e){
+    toast('Could not read that share code. Make sure it was copied fully.');
+  }
+});
+
+/* ============ HELPERS ============ */
+function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function truncate(s,n){ return s && s.length>n ? s.slice(0,n)+'…' : s; }
+function shuffle(arr){ const a=[...arr]; for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+/* init */
+renderDecks();
+populateDeckSelects();
+</script>
+</body>
+</html>
